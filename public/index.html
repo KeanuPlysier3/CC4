@@ -6,6 +6,31 @@
     <title>Document</title>
 </head>
 <body>
-    hy
+<div id="qr"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" integrity="sha512-ZDSPMa/JM1D+7kdg2x3BsruQ6T/JpJo3jWDWkCZsP+5yVyp1KfESqLI+7RqB5k24F7p2cV7i2YHh/890y6P6Sw==" crossorigin="anonymous"></script>
+  <script>
+    {
+    let socket; // will be assigned a value later
+    
+    const init = () => {
+      socket = io.connect('/');
+      socket.on('connect', () => {
+        console.log(`Connected: ${socket.id}`);
+        const url = `${new URL(`/sender.html?id=${socket.id}`, window.location)}`;
+      
+
+        const typeNumber = 4;
+        const errorCorrectionLevel = 'L';
+        const qr = qrcode(typeNumber, errorCorrectionLevel);
+        qr.addData(url);
+        qr.make();
+        document.getElementById('qr').innerHTML = qr.createImgTag(4);
+      });
+    };
+
+    init();
+  }
+  </script>
 </body>
 </html>

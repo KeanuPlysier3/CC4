@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC</title>
+</head>
+<body>
+  <h1>Sender</h1>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module">
+
+    let socket;
+    let targetSocketID ;
+    let peerConnection;
+
+    const servers = {
+      iceServers: [{
+        urls: 'stun:stun.l.google.com:19302'
+      }]
+    };
+
+    const init = async () => {
+      initSocket();
+      targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
+      console.log(`target: ${targetSocketID}`);
+      
+      const constraints = { data:true };
+    };
+
+    const initSocket = () => {
+      socket = io.connect('/');
+      socket.on('connect', () => {
+        console.log(socket.id);
+      });
+  
+
+      socket.on('peerAnswer', async (myId, answer, peerId) => {
+        console.log('Received peerAnswer from ${peerId}');
+        console.log(answer);
+        await handlePeerAnswer(myId, answer, peerId);
+      });
+
+      socket.on('peerIce', async (myId, candidate, peerId) => {
+        console.log(`Received peerIce from ${peerId}`, candidate);
+        await handlePeerIce(myId, candidate, peerId);
+      });
+    };
+
+    
+
+    const callPeer = async (peerId) => {
+      peerConnection = new RTCPeerConnection(servers);
+      // add the video stream
+      for (const track of myStream.getTracks()) {
+        peerConnection.addTrack(track, myStream);
+      }
+      peerConnection.onicecandidate = (e) => {
+        console.log('ice candidate', e.candidate);
+        socket.emit('peerIce', peerId, e.candidate);
+      };
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('peerOffer', peerId, offer);
+    };
+
+    const handlePeerAnswer = async (myId, answer, peerId) => {
+      await peerConnection.setRemoteDescription(answer);
+    };
+
+    const handlePeerIce = async (myId, candidate, peerId) => {
+      if (!candidate) {
+        return;
+      }
+      await peerConnection.addIceCandidate(candidate);
+    };
+
+    const getUrlParameter = name => {
+      name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    };
+
+    init();
+
+  </script>
+</body>
+</html>
