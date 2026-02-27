@@ -127,6 +127,8 @@ Luckily we already received the snippet of code to grab the socketID out of the 
 
 I also ***pasted the WebRTC exercise's sender.html file in my own***, This way I don't have to rewrite everything, and I can just tweak what needs to be tweaked.
 
+<br><br>
+
 #### capturing the socketID
 
 First I took a look at the init function from the sender inside the webrtc exercise:
@@ -145,7 +147,7 @@ Now I know exactly where we need to use the socketID. CallSelectedPeers was an e
 
 The callpeer function is one I would like to re-use, so that means we have to replace the CallSelectedPeer eventhandling logic, and replace it with the socketID from the url logic.
 
-PS: I deleted the video streaming logic, and changed my constraints to {data:true}, because I simply want to pass strings from peer to peer.
+PS: I deleted the video streaming logic.
 
 ```   const getUrlParameter = name => {
       name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -164,13 +166,79 @@ This is what the new init looks like:
       initSocket();
       targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
       console.log(`target: ${targetSocketID}`);
-      
-      const constraints = { data:true };
     };
 ```
+<br><br>
 
-#### callingPeer
+#### callingPeer()
 
 For my project I don't want to send video or audio, but I want to send string variables, this also means that the callpeer function needs to be tweaked for this to work.
 
 I look around online and found the following article: https://stackoverflow.com/questions/23264266/webrtc-sending-string-messages
+
+this article than send me towards: https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/createDataChannel
+
+It was clear that I had to  use a dataChannel.
+
+I followed the documentation, and made the following change:
+
+```
+  const attemptPeerCall = () => {
+            targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
+              console.log(`target: ${targetSocketID}`);
+            callPeer(targetSocketID)
+        }
+
+        const callPeer = async (peerId) => {
+            peerConnection = new RTCPeerConnection(servers);
+            // add the video stream
+            const dataChannel = peerConnection.createDataChannel('shot');
+            setupDataChannel(dataChannel);
+
+            peerConnection.onicecandidate = (e) => {
+                console.log('ice candidate', e.candidate);
+                socket.emit('peerIce', peerId, e.candidate);
+            };
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit('peerOffer', peerId, offer);
+        };
+```
+
+On the receiver's side there are still things that need to change to be able to handle this communication.
+
+<br><br>
+
+#### callingPeer() on receiver's side
+
+I first included he logic that handles the peerOffer, and peerIce events.
+
+I eventually tried to see if the connection works, but I got this error: 
+
+```
+(index):51 Uncaught (in promise) TypeError: Failed to construct 'RTCPeerConnection': The provided value is not of type 'RTCConfiguration'.
+
+```
+
+I throw it inside of my AI agent, and asked for the problem. 
+and apparently I forgot to include the following snippet in my index.html: 
+
+```
+   const servers = {
+                iceServers: [{
+                    urls: `stun:stun.l.google.com:19302`
+                }]
+            };
+```
+
+One problem that is occuring at the moment is that my the dataChannel messages are not firing.
+
+After looking for a while I was so confused, and I threw my source inside of the AI.
+
+<br><br>
+
+![alt text](image-2.png)
+
+<br><br>
+
+turned out I used a capital letter in the wrong place. 
