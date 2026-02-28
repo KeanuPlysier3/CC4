@@ -54,7 +54,7 @@
                 });
             };
 
-              const answerPeerOffer = async (myId, offer, peerId) => {
+            const answerPeerOffer = async (myId, offer, peerId) => {
                 peerConnection = new RTCPeerConnection(servers);
 
                 // Set up ondataChannel FIRST, before setRemoteDescription
@@ -62,13 +62,28 @@
                     const dataChannel = e.channel;
                     console.log('Data channel received:', dataChannel.label);
 
-                    dataChannel.onopen = (e) => {
-                        console.log('Receiver channel OPENED!');
-                        dataChannel.send('hello back');
-                    }
-                    dataChannel.onmessage = (e) => {
-                        console.log('Receiver got:', e.data);
-                    }
+                    // dataChannel.onopen = (e) => {
+                    //     console.log('Receiver channel OPENED!');
+                    //     dataChannel.send('hello back');
+                    // }
+
+                    dataChannel.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+
+                        switch (message.type) {
+                            case 'shot':
+                                //handleShot(message.data);
+                                console.log(`shot: ${message.data}`)
+                                break;
+                            case 'hello':
+                                //handleHello(message.data);
+                                console.log(`hello: ${message.data}`)
+                                break;
+                            default:
+                                console.log('Unknown event:', message.type);
+                        }
+                    };
+
                     dataChannel.onerror = (error) => {
                         console.error('Channel error:', error);
                     }

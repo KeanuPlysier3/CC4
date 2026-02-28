@@ -55,14 +55,16 @@ server.listen(port, () => {
 
 ```
 
-I asked several questions to my AI as I usually do. I always want to understand what I am doing and that is why I added comments next to it, that explain this snippet.
+> **🤖 AI Used:** I asked several questions to my AI as I usually do. I always want to understand what I am doing and that is why I added comments next to it, that explain this snippet.
 
 That way I also realised that I have to change the port number from 443 to 80 for http, but this might cause some problems in the future, as I vaguely remember that webRTC can only use https.
 
 ![alt text](image.png) 
 
 <br><br>
-I usually try to understand the explanation, and than form my way of understanding it back. That way the AI can clearly see where I missunderstand certain concepts. This time I seem to have understood the concept fairly well.
+
+> **🤖 AI Used:** I usually try to understand the explanation, and than form my way of understanding it back. That way the AI can clearly see where I missunderstand certain concepts. This time I seem to have understood the concept fairly well.
+
 <br><br>
 
 
@@ -220,7 +222,8 @@ I eventually tried to see if the connection works, but I got this error:
 
 ```
 
-I throw it inside of my AI agent, and asked for the problem. 
+> **🤖 AI Used:** I throw it inside of my AI agent, and asked for the problem. 
+
 and apparently I forgot to include the following snippet in my index.html: 
 
 ```
@@ -233,7 +236,7 @@ and apparently I forgot to include the following snippet in my index.html:
 
 One problem that is occuring at the moment is that my the dataChannel messages are not firing.
 
-After looking for a while I was so confused, and I threw my source inside of the AI.
+> **🤖 AI Used:** After looking for a while I was so confused, and I threw my source inside of the AI.
 
 <br><br>
 
@@ -241,4 +244,51 @@ After looking for a while I was so confused, and I threw my source inside of the
 
 <br><br>
 
-turned out I used a capital letter in the wrong place. 
+turned out I used a capital letter in the wrong place.
+
+<br><br>
+
+## transporting data
+
+I technically already included transporting data inside of the connection topic of the project, but In this part I will try to use that data inside of the receivers part. Right now I am also only transporting when the connection is established, and i am not yet capable of transporting data at will. To figure this out, I will place a button on the sender`s side. Everytime the button is pressed i want to send hello to the receiver.
+
+On the receiver`s side i will capture the data put it in a variable and paste it on the page. If that works I can implement the word recognition logic.
+<br><br>
+
+### transporting data at will
+
+> **🤖 AI Used:** Because I wanted to know if there was a way to filter the type of message we could send, and make the listener listen for a specific event w/ webrtc just like we do with webSockets (e.g: socket.on(`peer offer`)) I asked AI. It said we could use json for this and include a type and thn the actual data: 
+<br><br>
+
+```
+const handleClick = (channel) => {
+    channel.send(JSON.stringify({ type: 'shot', data: 'something' }));
+}
+```
+<br><br>
+and on the receiver's side:
+<br><br>
+
+```
+
+channel.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    
+    switch (message.type) {
+        case 'shot':
+            handleShot(message.data);
+            break;
+        case 'hello':
+            handleHello(message.data);
+            break;
+        default:
+            console.log('Unknown event:', message.type);
+    }
+};
+
+```
+<br><br>
+
+This way I could handle different types of messages on the receiver's side.
+After tweaking and testing, this indeed seems to work perfectly which is awesome. 
+
