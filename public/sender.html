@@ -83,12 +83,14 @@
             channel.onopen = (event) => {
                 console.log('Channel opened!');
                 channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+                listening(channel);
             };
             channel.onmessage = (event) => {
                 console.log(event.data);
             };
 
             $btn.addEventListener("click", () => handleClick(channel))
+
         }
 
         const handleClick = (channel) => {
@@ -149,7 +151,8 @@
 
                 if (labels[index] === "Blocked") {
 
-                    console.log("Blocked by JAMES");
+                    console.log("Blocked by JAMES send");
+                    channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
                 }
 
 
