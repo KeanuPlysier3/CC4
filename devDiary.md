@@ -241,4 +241,17 @@ After looking for a while I was so confused, and I threw my source inside of the
 
 <br><br>
 
-turned out I used a capital letter in the wrong place. 
+turned out I used a capital letter in the wrong place.
+
+<br><br>
+
+## transporting data
+
+I technically already included transporting data inside of the connection topic of the project, but In this part I will try to use that data inside of the receivers part. Right now I am also only transporting when the connection is established, and i am not yet capable of transporting data at will. To figure this out, I will place a button on the sender`s side. Everytime the button is pressed i want to send hello to the receiver.
+
+On the receiver`s side i will capture the data put it in a variable and paste it on the page. If that works I can implement the word recognition logic.
+
+### transporting data at will
+
+
+
