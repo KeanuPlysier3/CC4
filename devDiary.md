@@ -292,3 +292,170 @@ channel.onmessage = (event) => {
 This way I could handle different types of messages on the receiver's side.
 After tweaking and testing, this indeed seems to work perfectly which is awesome. 
 
+<br><br>
+
+## Model
+
+Next up is to include my model that will have to recognize the difference between "two" or "three", I already used such a model in the previous 
+assignment: https://keanupl.be/experience/.
+
+The idea is to let this model recognize what the user says on the sender's side. Based on that it will send the string value of the word to the receiver. 
+
+So again I am not handling the audio recognition on the receiver's side, but on the sender's side and passing that string value.
+
+Luckily I already have the logic and code in this previous project, and also a model that I can use now just for testing. 
+
+I copied the following snippet of code: 
+
+```
+const listening = async () => {//sets up the speech command model and listening function
+    const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const modelPath = baseURL + "models/blocked/";
+
+    const recognizer = speechCommands.create(
+        "BROWSER_FFT", 
+        undefined, 
+        modelPath + "model.json", //use following model
+        modelPath + "metadata.json" //use this weights file
+    );
+
+    await recognizer.ensureModelLoaded();
+
+    $micIcon.style.opacity = 0.2;
+
+    console.log("Model ready! Listening..."); //everything loaded in
+
+    recognizer.listen(async result => {
+
+        // result.scores = prediction probabilities for each class
+        const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+        const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+        const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+        // Display which word was detected
+        console.log("Detected:", labels[index]);
+
+
+        if (labels[index] === "Blocked") {
+            playing = true;
+            console.log("Blocked by JAMES");
+            $videoBlocked.play();
+        }
+
+
+    }, { 
+        // How much audio overlaps between predictions (0.1–0.9)
+        overlapFactor: 0.5,
+
+        // Minimum confidence required to report a word
+        probabilityThreshold: 0.7,
+
+        includeSpectrogram: false
+    });
+}const listening = async () => {//sets up the speech command model and listening function
+    const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const modelPath = baseURL + "models/blocked/";
+
+    const recognizer = speechCommands.create(
+        "BROWSER_FFT", 
+        undefined, 
+        modelPath + "model.json", //use following model
+        modelPath + "metadata.json" //use this weights file
+    );
+
+    await recognizer.ensureModelLoaded();
+
+    $micIcon.style.opacity = 0.2;
+
+    console.log("Model ready! Listening..."); //everything loaded in
+
+    recognizer.listen(async result => {
+
+        // result.scores = prediction probabilities for each class
+        const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+        const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+        const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+        // Display which word was detected
+        console.log("Detected:", labels[index]);
+
+
+        if (labels[index] === "Blocked") {
+            playing = true;
+            console.log("Blocked by JAMES");
+            $videoBlocked.play();
+        }
+
+
+    }, { 
+        // How much audio overlaps between predictions (0.1–0.9)
+        overlapFactor: 0.5,
+
+        // Minimum confidence required to report a word
+        probabilityThreshold: 0.7,
+
+        includeSpectrogram: false
+    });
+}
+```
+<br><br>
+
+Changed a few little things such as the path and ended up with this:
+
+```
+    const listening = async () => {//sets up the speech command model and listening function
+            const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const modelPath = baseURL + "model/blocked/";
+
+            const recognizer = speechCommands.create(
+                "BROWSER_FFT",
+                undefined,
+                modelPath + "model.json", //use following model
+                modelPath + "metadata.json" //use this weights file
+            );
+
+            await recognizer.ensureModelLoaded();
+
+            console.log("Model ready! Listening..."); //everything loaded in
+
+            recognizer.listen(async result => {
+
+                // result.scores = prediction probabilities for each class
+                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+                // Display which word was detected
+                console.log("Detected:", labels[index]);
+
+
+                if (labels[index] === "Blocked") {
+
+                    console.log("Blocked by JAMES");
+                }
+
+
+            }, {
+                // How much audio overlaps between predictions (0.1–0.9)
+                overlapFactor: 0.5,
+
+                // Minimum confidence required to report a word
+                probabilityThreshold: 0.7,
+
+                includeSpectrogram: false
+            });
+        }
+```
+
+<br><br>
+
+Then there it was the error I was already expecting from the beginning of the project: 
+
+```
+speech-commands:17 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'getUserMedia')
+
+```
+
+<br><br>
+
+This error is because right now I am using http, but tensorflow can only work with https or localhost. So I will have to switch to using https.
