@@ -10,7 +10,6 @@
 <body>
     <h1>Sender</h1>
     <button class="btn">say something</button>
-
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -30,7 +29,6 @@
         const init = async () => {
             initSocket();
             attemptPeerCall();
-            listening();
         };
 
         const initSocket = () => {
@@ -123,7 +121,7 @@
             return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
         };
 
-        const listening = async () => {//sets up the speech command model and listening function
+        const listening = async (channel) => {//sets up the speech command model and listening function
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
             const modelPath = baseURL + "model/blocked/";
 
@@ -166,6 +164,17 @@
             });
         }
 
+        const requestMicPermission = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone permission granted');
+                stream.getTracks().forEach(track => track.stop()); // Stop the stream, we just needed permission
+                return true;
+            } catch (err) {
+                console.error('Microphone permission denied:', err);
+                return false;
+            }
+        };
         init();
 
     </script>
