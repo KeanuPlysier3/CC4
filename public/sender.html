@@ -9,6 +9,7 @@
 
 <body>
     <h1>Sender</h1>
+    <button class="btn">say something</button>
 
     <script src="/socket.io/socket.io.js"></script>
     <script type="module">
@@ -16,6 +17,7 @@
         let socket;
         let targetSocketID;
         let peerConnection;
+        const $btn = document.querySelector('.btn');
 
         const servers = {
             iceServers: [{
@@ -50,10 +52,10 @@
 
         const attemptPeerCall = () => {
             targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
-              console.log(`target: ${targetSocketID}`);
-              
-            if(targetSocketID !== ''){
-            callPeer(targetSocketID)
+            console.log(`target: ${targetSocketID}`);
+
+            if (targetSocketID !== '') {
+                callPeer(targetSocketID)
             }
         }
 
@@ -79,14 +81,18 @@
         const setupDataChannel = (channel) => {
             channel.onopen = (event) => {
                 console.log('Channel opened!');
-                channel.send("hello");
+                channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
             };
             channel.onmessage = (event) => {
                 console.log(event.data);
             };
+
+            $btn.addEventListener("click", () => handleClick(channel))
         }
 
-
+        const handleClick = (channel) => {
+            channel.send(JSON.stringify({ type: 'shot', data: 'something' }));
+        }
 
 
 
@@ -104,8 +110,6 @@
             }
             await peerConnection.addIceCandidate(candidate);
         };
-
-
 
 
 
