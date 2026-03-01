@@ -23,9 +23,9 @@ const generateCertificate = (ip) => {
       { stdio: 'ignore' }
     );
     fs.writeFileSync(ipFile, ip);//save ip -> helps with remembering
-    console.log(`✅ Certificate generated!`);
+    console.log(`Certificate generated.`);
   } catch (err) {
-    console.error('❌ Failed to generate certificate. Make sure openssl is installed.');
+    console.error('Failed to generate certificate. Make sure openssl is installed.');
     process.exit(1);
   }
 };

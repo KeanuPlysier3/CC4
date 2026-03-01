@@ -10,18 +10,18 @@ In this new version, the player will be able to connect using their smartphone. 
 - CONNECTING: establishing connection between peers.
 - TRANSPORTING DATA: transporting data from peer to peer.
 - MODEL: creating and implementing a model that understands which word we say (**two** or **three**).
-- TWEAKING: the game will need some tweeks for it to actually work.
+- TWEAKING: the game will need some tweaks for it to actually work.
 
 <br><br>
 
 ## connection: 
 
-To establish a connection I think it was important to understand the following things.
-- First thing is that we need a QR-code for the peers to find eachother. 
+To establish a connection, I think it was important to understand the following things.
+- First thing is that we need a QR-code for the peers to find each other. 
 - Second is that we use the server as a middle man in the signalling.
 - Third we need to incorporate ICE for the peers to find potential routes between them.
 
-When looking at those points it becomes clear that this assignment is a mix of exercise made in class. The qr-code will deliver a url, inside the url we will find the socketID of the receiver. We can than use that socket ID inside the sender, and send a peerOffer. From that point it's the same as the webRTC exercise in class.
+When looking at those points it becomes clear that this assignment is a mix of exercises made in class. The QR-code will deliver a URL, inside the URL we will find the socketID of the receiver. We can then use that socket ID inside the sender, and send a peerOffer. From that point it's the same as the webRTC exercise in class.
 
 <br><br>
 
@@ -38,7 +38,7 @@ server.listen(port, () => {
 });
 ```
 
-with the snippent from the qr exercise:
+with the snippet from the QR exercise:
 
 ```
 server.listen(port, () => {
@@ -63,7 +63,7 @@ That way I also realised that I have to change the port number from 443 to 80 fo
 
 <br><br>
 
-> **🤖 AI Used:** I usually try to understand the explanation, and than form my way of understanding it back. That way the AI can clearly see where I missunderstand certain concepts. This time I seem to have understood the concept fairly well.
+> **🤖 AI Used:** I usually try to understand the explanation, and then form my way of understanding it back. That way the AI can clearly see where I misunderstand certain concepts. This time I seem to have understood the concept fairly well.
 
 <br><br>
 
@@ -77,7 +77,7 @@ As for now, the server works and directs us to the index.html(receiver).
 
 ### receiver (index.html)
 
-Right now i simply had an html document saying "hy". This was to see if the server will serve the public folder and find the index.html file.
+Right now I simply had an HTML document saying "hi". This was to see if the server will serve the public folder and find the index.html file.
 
 We now know it does, so next up is building the qr code.
 This will also be pretty similar to the qr code exercise for now.
@@ -115,7 +115,7 @@ After checking the receiver file in the qr code exercise I grabbed the qr code c
 
 ```
 
-After pasting it in I simply had to change the url to fit my file structure. This meant I had to change the name from controller.html to sender.html. Not sure if this is relavant but for this I obviously did not use AI.
+After pasting it in I simply had to change the URL to fit my file structure. This meant I had to change the name from controller.html to sender.html. Not sure if this is relevant but for this I obviously did not use AI.
 
 I tested the scan on my phone, to see if the socketID is correctly being passed. So that means we can now move on to the sender.
 
@@ -213,7 +213,7 @@ On the receiver's side there are still things that need to change to be able to 
 
 #### callingPeer() on receiver's side
 
-I first included he logic that handles the peerOffer, and peerIce events.
+I first included the logic that handles the peerOffer and peerIce events.
 
 I eventually tried to see if the connection works, but I got this error: 
 
@@ -250,9 +250,9 @@ turned out I used a capital letter in the wrong place.
 
 ## transporting data
 
-I technically already included transporting data inside of the connection topic of the project, but In this part I will try to use that data inside of the receivers part. Right now I am also only transporting when the connection is established, and i am not yet capable of transporting data at will. To figure this out, I will place a button on the sender`s side. Everytime the button is pressed i want to send hello to the receiver.
+I technically already included transporting data inside of the connection topic of the project, but in this part I will try to use that data inside of the receiver's part. Right now I am also only transporting when the connection is established, and I am not yet capable of transporting data at will. To figure this out, I will place a button on the sender's side. Every time the button is pressed I want to send "hello" to the receiver.
 
-On the receiver`s side i will capture the data put it in a variable and paste it on the page. If that works I can implement the word recognition logic.
+On the receiver's side I will capture the data, put it in a variable, and paste it on the page. If that works I can implement the word recognition logic.
 <br><br>
 
 ### transporting data at will
@@ -353,50 +353,6 @@ const listening = async () => {//sets up the speech command model and listening 
 
         includeSpectrogram: false
     });
-}const listening = async () => {//sets up the speech command model and listening function
-    const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-    const modelPath = baseURL + "models/blocked/";
-
-    const recognizer = speechCommands.create(
-        "BROWSER_FFT", 
-        undefined, 
-        modelPath + "model.json", //use following model
-        modelPath + "metadata.json" //use this weights file
-    );
-
-    await recognizer.ensureModelLoaded();
-
-    $micIcon.style.opacity = 0.2;
-
-    console.log("Model ready! Listening..."); //everything loaded in
-
-    recognizer.listen(async result => {
-
-        // result.scores = prediction probabilities for each class
-        const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
-        const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
-        const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
-
-        // Display which word was detected
-        console.log("Detected:", labels[index]);
-
-
-        if (labels[index] === "Blocked") {
-            playing = true;
-            console.log("Blocked by JAMES");
-            $videoBlocked.play();
-        }
-
-
-    }, { 
-        // How much audio overlaps between predictions (0.1–0.9)
-        overlapFactor: 0.5,
-
-        // Minimum confidence required to report a word
-        probabilityThreshold: 0.7,
-
-        includeSpectrogram: false
-    });
 }
 ```
 <br><br>
@@ -422,9 +378,9 @@ Changed a few little things such as the path and ended up with this:
             recognizer.listen(async result => {
 
                 // result.scores = prediction probabilities for each class
-                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const scores = result.scores; // array with two probability scores ex:[0.92,0.08]
                 const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
-                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+                const index = scores.indexOf(Math.max(...scores)); //which one has the highest probability score -> takes position of that value over the spread out array
 
                 // Display which word was detected
                 console.log("Detected:", labels[index]);
@@ -528,7 +484,7 @@ because we our using dynamically generate certificates now we also have to updat
 ```
 let options = {};
 if (isDevelopment) {
-  generateCertificate(localIP);//generate certifacate for the local ip if necessary
+  generateCertificate(localIP);//generate certificate for the local IP if necessary
   options = {
     key: fs.readFileSync('./key.pem'),
     cert: fs.readFileSync('./cert.pem')
@@ -562,14 +518,14 @@ server.listen(port, () => {
 
 Now the code did not return any errors anymore.
 
-> **🤖 AI Used:** For full transparency I will restate that for this part I did ask AI to help me understand the problem and come up with different solutions. I hand picked this solution, because it seemed the most dynamic. The first solution seemed similar but wouldn't be possible when switching to a different network/ when the IP address would change. These are flaws that I myself noticed and that is why I ended up with a more dynamic solution.
+> **🤖 AI Used:** For full transparency I will restate that for this part I did ask AI to help me understand the problem and come up with different solutions. I handpicked this solution because it seemed the most dynamic. The first solution seemed similar but wouldn't work when switching to a different network or when the IP address would change. These are flaws that I myself noticed, and that is why I ended up with a more dynamic solution.
 
 <br><br>
 
 
-### Chrome not compatibel
+### Chrome not compatible
 
-A small issue I seem to have run into is the fact that chrome on phone does not allow getUserMedia() this means that the microphone is not accessible on the chrome app on phone.
+A small issue I seem to have run into is the fact that Chrome on phone does not allow getUserMedia(). This means that the microphone is not accessible on the Chrome app on phone.
 
 ### using the model
 
@@ -578,7 +534,7 @@ To test if everything works with the current model I had to update some pieces o
 
 #### sender.html
 
-If the model detects something it must be able to send a message with the detected word towards the receiver, that is why when the channel opens I pass the channel inside of the listen function.
+If the model detects something, it must be able to send a message with the detected word towards the receiver. That is why when the channel opens, I pass the channel to the listening function.
 
 ```
 const setupDataChannel = (channel) => {
@@ -617,9 +573,9 @@ The listen function sets up the model and starts listening.
             recognizer.listen(async result => {
 
                 // result.scores = prediction probabilities for each class
-                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const scores = result.scores; // array with two probability scores ex:[0.92,0.08]
                 const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
-                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+                const index = scores.indexOf(Math.max(...scores)); //which one has the highest probability score -> takes position of that value over the spread out array
 
                 // Display which word was detected
                 console.log("Detected:", labels[index]);
@@ -673,3 +629,75 @@ In this file I simply changed the message receiver and included a new type.
                     };
 
 ```
+<br><br>
+#### Training new model
+
+Now that I know that my code works I took some time to train a new model that understands the difference between the words "two", "three", and background noise. 
+I trained the model using Teachable Machines: https://teachablemachine.withgoogle.com/train/audio.
+
+I gave it a lot of data and also let different people speak, to add more variation. When training I set the amount of Epochs to 1000, so it took about 7minutes for the training to be complete. After I just downloaded the zipFile and replace the current test model with this one.
+
+To make the current code work I had to update it, because it uses different labels now: 
+<br><br>
+
+```
+  const listening = async (channel) => {//sets up the speech command model and listening function
+            const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const modelPath = baseURL + "model/shot/";
+
+            const recognizer = speechCommands.create(
+                "BROWSER_FFT",
+                undefined,
+                modelPath + "model.json", //use following model
+                modelPath + "metadata.json" //use this weights file
+            );
+
+            await recognizer.ensureModelLoaded();
+
+            console.log("Model ready! Listening..."); //everything loaded in
+
+            recognizer.listen(async result => {
+
+                // result.scores = prediction probabilities for each class
+                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+                // Display which word was detected
+                console.log("Detected:", labels[index]);
+
+                switch (labels[index]) {
+                    case 'Two':
+                        channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                        break;
+
+                    case 'Three':
+                        channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                        break;
+
+                    default:
+                        channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
+                }
+
+
+                // if (labels[index] === "Blocked") {
+
+                //     console.log("Blocked by JAMES send");
+                //     channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
+                // }
+
+
+            }, {
+                // How much audio overlaps between predictions (0.1–0.9)
+                overlapFactor: 0.45,
+
+                // Minimum confidence required to report a word
+                probabilityThreshold: 0.99,
+
+                includeSpectrogram: false
+            });
+        }
+
+```
+
+I also deleted the receiver's logic to receive data from the previous model. 
