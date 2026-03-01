@@ -10,7 +10,8 @@
 <body>
     <h1>Sender</h1>
     <button class="btn">say something</button>
-
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script type="module">
 
@@ -27,7 +28,7 @@
 
         const init = async () => {
             initSocket();
-            attemptPeerCall()
+            attemptPeerCall();
         };
 
         const initSocket = () => {
@@ -82,12 +83,14 @@
             channel.onopen = (event) => {
                 console.log('Channel opened!');
                 channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+                listening(channel);
             };
             channel.onmessage = (event) => {
                 console.log(event.data);
             };
 
             $btn.addEventListener("click", () => handleClick(channel))
+
         }
 
         const handleClick = (channel) => {
@@ -120,6 +123,61 @@
             return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
         };
 
+        const listening = async (channel) => {//sets up the speech command model and listening function
+            const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const modelPath = baseURL + "model/blocked/";
+
+            const recognizer = speechCommands.create(
+                "BROWSER_FFT",
+                undefined,
+                modelPath + "model.json", //use following model
+                modelPath + "metadata.json" //use this weights file
+            );
+
+            await recognizer.ensureModelLoaded();
+
+            console.log("Model ready! Listening..."); //everything loaded in
+
+            recognizer.listen(async result => {
+
+                // result.scores = prediction probabilities for each class
+                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+                // Display which word was detected
+                console.log("Detected:", labels[index]);
+
+
+                if (labels[index] === "Blocked") {
+
+                    console.log("Blocked by JAMES send");
+                    channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
+                }
+
+
+            }, {
+                // How much audio overlaps between predictions (0.1–0.9)
+                overlapFactor: 0.5,
+
+                // Minimum confidence required to report a word
+                probabilityThreshold: 0.7,
+
+                includeSpectrogram: false
+            });
+        }
+
+        const requestMicPermission = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('Microphone permission granted');
+                stream.getTracks().forEach(track => track.stop()); // Stop the stream, we just needed permission
+                return true;
+            } catch (err) {
+                console.error('Microphone permission denied:', err);
+                return false;
+            }
+        };
         init();
 
     </script>
