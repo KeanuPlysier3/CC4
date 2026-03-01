@@ -296,6 +296,7 @@ After tweaking and testing, this indeed seems to work perfectly which is awesome
 
 ## Model
 
+### http -> https
 Next up is to include my model that will have to recognize the difference between "two" or "three", I already used such a model in the previous 
 assignment: https://keanupl.be/experience/.
 
@@ -459,3 +460,216 @@ speech-commands:17 Uncaught (in promise) TypeError: Cannot read properties of un
 <br><br>
 
 This error is because right now I am using http, but tensorflow can only work with https or localhost. So I will have to switch to using https.
+
+> **🤖 AI Used:** I discussed possible solutions for my index.js file with my AI, and I decided on using a provided solution by AI that will checks if we have a new IP or not.
+If our ip is not new, and we have the certificates thn we do nothing.
+
+If our ip is different, than we generate new certificates for it. These certificates make it so that we can encrypt data, and to identify ourselves. The browser won't allow sensitive features on insecure connections meaning we won't be able to use our mic.
+
+To create those certificates we use execSync which allows us to write a command in the terminal and wait until its done. The command we run is the following:
+
+
+```
+ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=${ip}" -addext "subjectAltName=DNS:localhost,IP:${ip}"
+```
+<br><br>
+
+The full certificate function currently looks like this:
+
+```
+const generateCertificate = (ip) => {
+  const certExists = fs.existsSync('./cert.pem') && fs.existsSync('./key.pem');//check if the certificates already exist
+  const ipFile = '.lastIP';
+  const lastIP = fs.existsSync(ipFile) ? fs.readFileSync(ipFile, 'utf8') : '';
+
+  if (certExists && lastIP === ip) {
+    console.log(`Using existing certificate for ${ip}`);
+    return;
+  }
+
+  console.log(`Generating certificate for ${ip}...`);
+  try {
+    execSync(
+      `openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=${ip}" -addext "subjectAltName=DNS:localhost,IP:${ip}"`,
+      { stdio: 'ignore' }
+    );
+    fs.writeFileSync(ipFile, ip);//save ip -> helps with remembering
+    console.log(`✅ Certificate generated!`);
+  } catch (err) {
+    console.error('❌ Failed to generate certificate. Make sure openssl is installed.');
+    process.exit(1);
+  }
+};
+```
+
+<br><br>
+
+As you can see this function expects an ip parameter. That means we have to be able to use our current ip address.
+This is very similar to how we previously did it only this time we won't past the link in the console. That is because the link would be accessible, even if the server is not listening yet. The code looks like this: 
+
+```
+const getLocalIP = () => {
+  const networkInterfaces = os.networkInterfaces();//list of all network interfaces devices could use to connect to  this server. (e.g. wifi, ethernet, etc.)
+  for (const interfaceName in networkInterfaces) { // for each interface name (e.g. "eth0", "wifi0", "lo", etc.)
+    for (const iface of networkInterfaces[interfaceName]) { // for each interface object in that array (e.g. { family: 'IPv4', address: '192.168.1.2' })
+      if (iface.family === 'IPv4' && !iface.internal) { //check if it is an IPv$ and not internal
+        return iface.address
+      }
+    }
+  }
+}
+
+const localIP = getLocalIP();
+```
+<br><br>
+
+because we our using dynamically generate certificates now we also have to update to options object to use them.
+
+```
+let options = {};
+if (isDevelopment) {
+  generateCertificate(localIP);//generate certifacate for the local ip if necessary
+  options = {
+    key: fs.readFileSync('./key.pem'),
+    cert: fs.readFileSync('./cert.pem')
+  };
+}
+
+```
+
+<br><br>
+the rest of the code only changes a little with a few tweaks 
+
+```
+const server = require(isDevelopment ? 'https' : 'http').Server(options, app);
+const port = process.env.PORT || (isDevelopment ? 3000 : 80);
+
+app.use(express.static('public'));
+
+
+const { Server } = require("socket.io");
+const io = new Server(server);
+
+server.listen(port, () => {
+  const protocol = isDevelopment ? 'https' : 'http';
+
+  console.log(`\n Server running!`);
+  //console.log(`Local: ${protocol}://localhost:${port}`);
+  console.log(`Network: ${protocol}://${localIP}:${port}\n`);
+});
+
+```
+
+Now the code did not return any errors anymore.
+
+> **🤖 AI Used:** For full transparency I will restate that for this part I did ask AI to help me understand the problem and come up with different solutions. I hand picked this solution, because it seemed the most dynamic. The first solution seemed similar but wouldn't be possible when switching to a different network/ when the IP address would change. These are flaws that I myself noticed and that is why I ended up with a more dynamic solution.
+
+<br><br>
+
+
+### Chrome not compatibel
+
+A small issue I seem to have run into is the fact that chrome on phone does not allow getUserMedia() this means that the microphone is not accessible on the chrome app on phone.
+
+### using the model
+
+To test if everything works with the current model I had to update some pieces of code.
+
+
+#### sender.html
+
+If the model detects something it must be able to send a message with the detected word towards the receiver, that is why when the channel opens I pass the channel inside of the listen function.
+
+```
+const setupDataChannel = (channel) => {
+            channel.onopen = (event) => {
+                console.log('Channel opened!');
+                channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+                listening(channel);
+            };
+            channel.onmessage = (event) => {
+                console.log(event.data);
+            };
+
+            $btn.addEventListener("click", () => handleClick(channel))
+
+        }
+```
+
+The listen function sets up the model and starts listening. 
+
+```
+  const listening = async (channel) => {//sets up the speech command model and listening function
+            const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const modelPath = baseURL + "model/blocked/";
+
+            const recognizer = speechCommands.create(
+                "BROWSER_FFT",
+                undefined,
+                modelPath + "model.json", //use following model
+                modelPath + "metadata.json" //use this weights file
+            );
+
+            await recognizer.ensureModelLoaded();
+
+            console.log("Model ready! Listening..."); //everything loaded in
+
+            recognizer.listen(async result => {
+
+                // result.scores = prediction probabilities for each class
+                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
+                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
+                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
+
+                // Display which word was detected
+                console.log("Detected:", labels[index]);
+
+
+                if (labels[index] === "Blocked") {
+
+                    console.log("Blocked by JAMES send");
+                    channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
+                }
+
+
+            }, {
+                // How much audio overlaps between predictions (0.1–0.9)
+                overlapFactor: 0.5,
+
+                // Minimum confidence required to report a word
+                probabilityThreshold: 0.7,
+
+                includeSpectrogram: false
+            });
+        }
+```
+as you can see when sending a message I added a new type, so in the receiver we will have to update the message receiving logic.
+
+
+#### index.html
+
+In this file I simply changed the message receiver and included a new type.
+
+```
+      dataChannel.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+
+                        switch (message.type) {
+                            case 'shot':
+                                //handleShot(message.data);
+                                console.log(`shot: ${message.data}`)
+                                break;
+                            case 'hello':
+                                //handleHello(message.data);
+                                console.log(`hello: ${message.data}`)
+                                break;
+                            case 'blocked':
+                                //handleHello(message.data);
+                                console.log(`blocked: ${message.data}`)
+                                break;
+                            default:
+                                console.log('Unknown event:', message.type);
+                        }
+                    };
+
+```
