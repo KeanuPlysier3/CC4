@@ -125,7 +125,7 @@
 
         const listening = async (channel) => {//sets up the speech command model and listening function
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-            const modelPath = baseURL + "model/blocked/";
+            const modelPath = baseURL + "model/shot/";
 
             const recognizer = speechCommands.create(
                 "BROWSER_FFT",
@@ -148,20 +148,33 @@
                 // Display which word was detected
                 console.log("Detected:", labels[index]);
 
+                switch (labels[index]) {
+                    case 'Two':
+                        channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                        break;
 
-                if (labels[index] === "Blocked") {
+                    case 'Three':
+                        channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                        break;
 
-                    console.log("Blocked by JAMES send");
-                    channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
+                    default:
+                        channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
                 }
+
+
+                // if (labels[index] === "Blocked") {
+
+                //     console.log("Blocked by JAMES send");
+                //     channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
+                // }
 
 
             }, {
                 // How much audio overlaps between predictions (0.1–0.9)
-                overlapFactor: 0.5,
+                overlapFactor: 0.45,
 
                 // Minimum confidence required to report a word
-                probabilityThreshold: 0.7,
+                probabilityThreshold: 0.8,
 
                 includeSpectrogram: false
             });
