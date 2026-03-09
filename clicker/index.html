@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click And Roll</title>
+    <link rel="stylesheet" href="CSS/reset.css">
+    <link rel="stylesheet" href="CSS/style.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="stats">
+                <p id="stats__three">d</p>
+                <p id="stats__two">d</p>
+                <p id="stats__speed">d</p>
+            </div>
+
+            <h1>Click And Roll</h1>
+
+            <div class="earnings">
+                <p id="earnings__xp">d</p>
+            </div>
+
+
+        </nav>
+    </header>
+    <main>
+        <section class="game">
+            <h2 class="visually-hidden">click and roll</h2>
+
+
+            <section class="top">
+                <h3 class="visually-hidden">top</h3>
+                <div class="shotclock">
+                    <p class="shotclock__text"> clock</p>
+                    <p id="clock" class="shotclock__display">shotclock</p>
+                </div>
+            </section>
+
+            <dialog class="start">
+                <h2 class="visually-hidden">form</h2>
+                <form method="POST" class="form">
+                    <label for="username">username</label>
+                    <input type="text" placeholder="player1" id="username" name="username" maxlength="11">
+                    <input type="submit" value="continue" class="button">
+                </form>
+            </dialog>
+
+            <section class="content">
+                <h3 class="visually-hidden">content</h3>
+                <section class="progress">
+                    <h4 class="visually-hidden">progress</h4>
+                    <img class="progress__bar" src="ASSETS/Images/state0.png" alt="state0">
+                </section>
+
+
+                <section class="grid">
+                    <h4 class="visually-hidden">grid</h4>
+                    <img id="hoop" src="ASSETS/Images/hoop.png" alt="hoop">
+                    <img id="net" src="ASSETS/Images/net.png" alt="net">
+                </section>
+
+
+                <section class="popup">
+
+                    <h4 class="popup__title">shop: </h4>
+
+                    <article id="pop1" class="popup__upgrade">
+                        <h5 class="visually-hidden">upgrade1</h5>
+                        <div class="pop__text">
+                            <p class="upgrade"> Three point</p>
+                            <p class="price" id="price1">25pts</p>
+                        </div>
+
+                        <button class="button button--pop" id="btn3">upgrade</button>
+                    </article>
+                    <article id="pop2" class="popup__upgrade">
+
+                        <h5 class="visually-hidden">upgrade2</h5>
+                        <div class="pop__text">
+                            <p class="upgrade">Two point</p>
+                            <p class="price" id="price2">25pts</p>
+                        </div>
+
+
+                        <button class="button button--pop" id="btn4">upgrade</button>
+                    </article>
+                    <article id="pop3" class="popup__upgrade">
+                        <h5 class="visually-hidden">upgrade3</h5>
+
+                        <div class="pop__text">
+                            <p class="upgrade"> Shot speed</p>
+                            <p class="price" id="price3">25pts</p>
+                        </div>
+
+                        <button class="button button--pop" id="btn5">upgrade</button>
+                    </article>
+                </section>
+            </section>
+
+
+
+            <section class="bottom">
+                <h3 class="visually-hidden">bottom</h3>
+                <div class="shotclock">
+                    <p class="shotclock__text">score</p>
+                    <p class="shotclock__display" id="score">score</p>
+                </div>
+
+                <button id="btn1" class="button">2pts</button>
+                <button id="btn2" class="button"> 3pts</button>
+
+                <div class="shotclock">
+                    <p class="shotclock__text">to beat</p>
+                    <p class="shotclock__display" id="target">24</p>
+                </div>
+
+            </section>
+        </section>
+    </main>
+    <script src="JS/script.js"></script>
+</body>
+
+</html>

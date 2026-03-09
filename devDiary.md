@@ -701,3 +701,26 @@ To make the current code work I had to update it, because it uses different labe
 ```
 
 I also deleted the receiver's logic to receive data from the previous model. 
+
+
+
+## consult
+
+I went on consult with Koen, and over there I showed what I had made.
+He told me that the certificates of local host are universal, meaning I could use those instead of generating them, for the the ip-adress. I did not realise that it first. He also said I could make use of simple peer to simplify things.
+
+
+## Next Week
+
+After consult I had the following things to do:
+
+- use localhost certificates and keys.
+- implement simple-peer
+- include the clicker game in there.
+
+
+## using localhost keys
+
+For this I went into the github directory provided by wouter, and simply copied the index.js structure of the webrtc exercise. Because we need to use the phone, we need the ip adress of the laptop. That is why I copied the IP grabbing function again. 
+
+## Clicker
