@@ -353,7 +353,7 @@ const updateTarget = () => { //sets new target score after previous gets beaten,
 
         case 3:
             wins = 0;
-            window.location.href = "/clicker/end.html";
+            window.location.href = "./end.html";
             break;
 
     }
