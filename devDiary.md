@@ -701,3 +701,39 @@ To make the current code work I had to update it, because it uses different labe
 ```
 
 I also deleted the receiver's logic to receive data from the previous model. 
+
+
+
+## consult
+
+I went on consult with Koen, and over there I showed what I had made.
+He told me that the certificates of local host are universal, meaning I could use those instead of generating them, for the the ip-adress. I did not realise that it first. He also said I could make use of simple peer to simplify things.
+
+
+
+- use localhost certificates and keys.
+- implement simple-peer
+- include the clicker game in there.
+
+
+## using localhost keys
+
+For this I went into the github directory provided by wouter, and simply copied the index.js structure of the webrtc exercise. Because we need to use the phone, we need the ip adress of the laptop. That is why I copied the IP grabbing function again. 
+
+## Clicker
+
+When implementing the clicker, I simply checked the js file of my previous project. I quickly understood how it worked again, and merged the js file with the js of the receiver. 
+
+I optimised the code little, by re-building 1 function that handles both 2 and 3 point shots based on parameters instead of 2 seperate functions. 
+
+I did not really experience any issues.
+
+
+## Next Week
+
+Next up :
+
+- simple peer.
+- optimise it for chrome on IOS.
+- aditional features?
+- optimise the looks of the sender.
