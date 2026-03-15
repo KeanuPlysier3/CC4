@@ -12,6 +12,8 @@
 <body class="sender__body">
     <h1>Sender</h1>
     <p>say "two" or "three"!</p>
+    <img src="assets/Images/mic.png" alt="mic" class="sender__mic">
+    <p class="sender__feedback">tap mic to start listening!</p>
     <p>OR</p>
     <p>Use the buttons.</p>
     <div class="sender__buttons">
@@ -32,8 +34,12 @@
         let targetSocketID;
         let peerConnection;
         let peer
+        let recognizer;
+        let listening = false;
         const $two = document.querySelector(".two");
         const $three = document.querySelector(".three");
+        const $mic = document.querySelector(".sender__mic");
+        const $feedback = document.querySelector(".sender__feedback");
 
         const buttons = [$two, $three];
 
@@ -109,7 +115,8 @@
             peer.on('connect', () => {
                 console.log('Peer connection established!');
                 peer.send(JSON.stringify({ type: 'hello', data: 'hello' }));
-                listening(peer);
+                // requestMicPermission();
+                setupRecognizer(peer);
                 buttons.forEach(button => button.addEventListener("click", (e) => handleClick(event, peer)));
             });
 
@@ -171,11 +178,11 @@
             return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
         };
 
-        const listening = async (channel) => {//sets up the speech command model and listening function
+        const setupRecognizer = async (channel) => {//sets up the speech command model and listening function
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
             const modelPath = baseURL + "model/shot/";
 
-            const recognizer = speechCommands.create(
+            recognizer = speechCommands.create(
                 "BROWSER_FFT",
                 undefined,
                 modelPath + "model.json", //use following model
@@ -185,51 +192,52 @@
             await recognizer.ensureModelLoaded();
 
             console.log("Model ready! Listening..."); //everything loaded in
-
-            recognizer.listen(async result => {
-
-                // result.scores = prediction probabilities for each class
-                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
-                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
-                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
-
-                // Display which word was detected
-                console.log("Detected:", labels[index]);
-
-                switch (labels[index]) {
-                    case 'Two':
-                        // channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
-                        peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
-                        break;
-
-                    case 'Three':
-                        // channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
-                        peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
-                        break;
-
-                    default:
-                        // channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
-                        peer.send(JSON.stringify({ type: 'shot', data: 'background' }));
-                }
-
-
-                // if (labels[index] === "Blocked") {
-
-                //     console.log("Blocked by JAMES send");
-                //     channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
-                // }
-
-
-            }, {
-                // How much audio overlaps between predictions (0.1–0.9)
-                overlapFactor: 0.45,
-
-                // Minimum confidence required to report a word
-                probabilityThreshold: 0.8,
-
-                includeSpectrogram: false
-            });
+            let permission = requestMicPermission();
+            permission ? $mic.addEventListener('click', listen) : console.error('Microphone permission is required to use the recognizer.');
         }
+
+        const listen = () => {
+            if (!listening) {
+                if (!recognizer) return;
+                listening = true;
+                $mic.classList.toggle("pulse");
+                $feedback.textContent = "Tap mic to stop listening.";
+                recognizer.listen(result => {
+                    const scores = result.scores;
+                    const labels = recognizer.wordLabels();
+                    const index = scores.indexOf(Math.max(...scores));
+                    console.log("Detected:", labels[index]);
+
+                    switch (labels[index]) {
+                        case 'Two':
+                            peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                            break;
+                        case 'Three':
+                            peer.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                            break;
+                        default:
+                            peer.send(JSON.stringify({ type: 'shot', data: 'background' }));
+                    }
+                }, {
+                    overlapFactor: 0.45,
+                    probabilityThreshold: 0.8,
+                    includeSpectrogram: false
+                });
+                console.log("Listening...");
+            } else {
+                if (recognizer && recognizer.isListening()) {
+                    $mic.classList.toggle("pulse");
+                    $feedback.textContent = "Tap mic to start listening.";
+                    listening = false;
+                    recognizer.stopListening();
+                    console.log("Stopped listening.");
+                }
+            }
+        };
+
+
+
+
 
         const requestMicPermission = async () => {
             try {

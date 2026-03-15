@@ -13,6 +13,20 @@
     src: url(../ASSETS/fonts/Helvetica.ttf);
 }
 
+@keyframes pulse-opacity {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
 
 
 
@@ -49,8 +63,7 @@
     /* 80px - top and bottom at sections */
 }
 
-body,
-html {
+body {
     overflow-x: hidden;
     overflow-y: hidden;
 }
@@ -447,6 +460,7 @@ canvas {
 }
 
 .sender__body {
+    overflow-y: visible !important;
     font-family: helvetica-bold;
     height: 100vh;
     background: rgba(15, 15, 15, 0.849);
@@ -466,7 +480,7 @@ canvas {
     color: var(--color-white);
     font-size: var(--fontsize-m);
     text-transform: uppercase;
-    margin-top: 5rem;
+    margin-top: 3rem;
 }
 
 .sender__buttons {
@@ -475,4 +489,20 @@ canvas {
     justify-content: center;
     align-items: center;
     margin-top: 5rem;
+}
+
+.sender__mic {
+    margin-top: var(--whitespace-s);
+    max-width: 50%;
+}
+
+.sender__feedback {
+    font-family: helvetica-bold;
+    color: var(--color-red) !important;
+    font-size: var(--fontsize-xs) !important;
+
+}
+
+.pulse {
+    animation: pulse-opacity 1s infinite;
 }

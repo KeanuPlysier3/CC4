@@ -737,3 +737,23 @@ Next up :
 - optimise it for chrome on IOS.
 - aditional features?
 - optimise the looks of the sender.
+
+
+
+## simple peer
+
+I simply followed the guide we were given on simple peer via github. I also asked a few questions on how it worked. 
+
+![alt text](image-3.png) ![alt text](image-4.png)
+
+I had to rewrite my data transfer logic, because the way of sending data had changed.
+
+
+## styling on sender page
+
+I simply added some css that fits the receiver's look. On chrome ios it looks different tho. Not everything fit on the screen, and since I was using the css file from last year I couldn't scroll. Some small tweaks made it possible tho.
+
+
+## chrome IOS
+
+Chrome on ios simply does not want to work. I tried a bunch of stuff. I optimised the code request mic permission on user interaction, but it does not do anything. When loading the page immediately denies the microphone acces without even being asked for permission yet.
