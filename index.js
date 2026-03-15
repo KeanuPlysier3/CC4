@@ -101,21 +101,11 @@ io.on('connection', socket => {
     io.emit('clients', clients);
   });
 
-  socket.on('peerOffer', (peerId, offer) => {
-    console.log(`Received peerOffer from ${socket.id} to ${peerId}`);
-    io.to(peerId).emit('peerOffer', peerId, offer, socket.id);
+  socket.on('signal', (peerId, signal) => {
+    console.log(`Received signal from ${socket.id} to ${peerId}`);
+    io.to(peerId).emit('signal', socket.id, signal, socket.id);
   });
 
-  socket.on('peerAnswer', (peerId, answer) => {
-    console.log(`Received peerAnswer from ${socket.id} to ${peerId}`);
-    io.to(peerId).emit('peerAnswer', peerId, answer, socket.id);
-  });
-
-  socket.on('peerIce', (peerId, candidate) => {
-    console.log(`Received peerIce from ${socket.id} to ${peerId}`);
-    io.to(peerId).emit('peerIce', peerId, candidate, socket.id);
-  });
-
-  io.emit('clients', clients);
+  // io.emit('clients', clients);
 
 });

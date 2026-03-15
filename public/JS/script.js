@@ -32,7 +32,7 @@ let clock = 24;
 
 let wins = 0;//total amount of wins tht updates progress image
 
-
+let peer;
 
 
 const init = () => {
@@ -79,14 +79,53 @@ const initSocket = () => {
         document.getElementById('qr').innerHTML = qr.createImgTag(4);
     });
 
-    socket.on('peerOffer', (myId, offer, peerId) => {
-        console.log(`Received peerOffer from ${peerId}`);
-        answerPeerOffer(myId, offer, peerId);
+    socket.on('signal', (myID, signal, peerId) => {
+        if (!peer) {
+            // If this is the first signal, it's an offer: create peer as receiver
+            peer = new SimplePeer({ initiator: false, trickle: false });
+
+            peer.on('signal', data => {
+                // Send answer back to initiator
+                socket.emit('signal', peerId, data);
+            });
+
+            peer.on('connect', () => {
+                console.log('Peer connection established!');
+                // You can send a hello or other data if you want
+                peer.send(JSON.stringify({ type: 'hello', data: 'hello from receiver' }));
+            });
+
+            peer.on('data', data => {
+                // Handle incoming data
+                // const message = JSON.parse(data.toString());
+                // ...handle message...
+                const message = JSON.parse(data);
+
+                switch (message.type) {
+                    case 'shot':
+                        handleShot(message.data);
+                        console.log(`shot: ${message.data}`)
+                        break;
+                    case 'hello':
+                        setupDialog()
+                        console.log(`hello: ${message.data}`)
+                        break;
+                    default:
+                        console.log('Unknown event:', message.type);
+                }
+            });
+        }
+        // Pass any signal (offer, answer, ICE) to SimplePeer
+        peer.signal(signal);
     });
-    socket.on('peerIce', (myId, candidate, peerId) => {
-        console.log(`Received peerIce from ${peerId}`, candidate);
-        handlePeerIce(myId, candidate, peerId);
-    });
+    // socket.on('peerOffer', (myId, offer, peerId) => {
+    //     console.log(`Received peerOffer from ${peerId}`);
+    //     answerPeerOffer(myId, offer, peerId);
+    // });
+    // socket.on('peerIce', (myId, candidate, peerId) => {
+    //     console.log(`Received peerIce from ${peerId}`, candidate);
+    //     handlePeerIce(myId, candidate, peerId);
+    // });
 };
 
 const answerPeerOffer = async (myId, offer, peerId) => {

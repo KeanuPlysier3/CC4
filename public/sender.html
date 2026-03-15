@@ -9,16 +9,22 @@
 
 <body>
     <h1>Sender</h1>
-    <button class="btn">say something</button>
+    <button class="two">2PTS</button>
+    <button class="three">3PTS</button>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"
+        integrity="sha512-0f7Ahsuvr+/P2btTY4mZIw9Vl23lS6LY/Y7amdkmUg2dqsUF+cTe4QjWvj/NIBHJoGksOiqndKQuI9yzn2hB0g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="module">
 
         let socket;
         let targetSocketID;
         let peerConnection;
-        const $btn = document.querySelector('.btn');
+        let peer
+        const $two = document.querySelector('.two');
+    const $two = document.querySelector('.two');
 
         const servers = {
             iceServers: [{
@@ -38,16 +44,22 @@
             });
 
 
-            socket.on('peerAnswer', async (myId, answer, peerId) => {
-                console.log(`Received peerAnswer from ${peerId}`);
-                console.log(answer);
-                await handlePeerAnswer(myId, answer, peerId);
+            socket.on('signal', async (myId, signal, peerId) => {
+                console.log(`Received signal from ${peerId}`);
+                console.log(signal);
+                peer.signal(signal);
             });
 
-            socket.on('peerIce', async (myId, candidate, peerId) => {
-                console.log(`Received peerIce from ${peerId}`, candidate);
-                await handlePeerIce(myId, candidate, peerId);
-            });
+            // socket.on('peerAnswer', async (myId, answer, peerId) => {
+            //     console.log(`Received peerAnswer from ${peerId}`);
+            //     console.log(answer);
+            //     await handlePeerAnswer(myId, answer, peerId);
+            // });
+
+            // socket.on('peerIce', async (myId, candidate, peerId) => {
+            //     console.log(`Received peerIce from ${peerId}`, candidate);
+            //     await handlePeerIce(myId, candidate, peerId);
+            // });
         };
 
 
@@ -60,38 +72,58 @@
             }
         }
 
-        const callPeer = async (peerId) => {
-            peerConnection = new RTCPeerConnection(servers);
-            // add the video stream
-            const dataChannel = peerConnection.createDataChannel('shot');
-            setupDataChannel(dataChannel);
+        // const callPeer = async (peerId) => {
+        //     peerConnection = new RTCPeerConnection(servers);
+        //     
+        //     const dataChannel = peerConnection.createDataChannel('shot');
+        //     setupDataChannel(dataChannel);
 
-            peerConnection.onicecandidate = (e) => {
-                console.log('ice candidate', e.candidate);
-                socket.emit('peerIce', peerId, e.candidate);
-            };
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit('peerOffer', peerId, offer);
+        //     peerConnection.onicecandidate = (e) => {
+        //         console.log('ice candidate', e.candidate);
+        //         socket.emit('peerIce', peerId, e.candidate);
+        //     };
+        //     const offer = await peerConnection.createOffer();
+        //     await peerConnection.setLocalDescription(offer);
+        //     socket.emit('peerOffer', peerId, offer);
+        // };
+
+        const callPeer = (peerId) => {
+            peer = new SimplePeer({ initiator: true, trickle: false });
+
+            peer.on('signal', data => {
+                socket.emit('signal', peerId, data);
+                console.log('Signal data emitted:', data);
+            });
+
+            peer.on('connect', () => {
+                console.log('Peer connection established!');
+                peer.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+                listening(peer);
+            });
+
+            peer.on('data', data => {
+                console.log('Received:', data.toString());
+            });
+
+            $btn.addEventListener("click", () => handleClick(peer));
         };
 
 
 
 
 
-        const setupDataChannel = (channel) => {
-            channel.onopen = (event) => {
-                console.log('Channel opened!');
-                channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
-                listening(channel);
-            };
-            channel.onmessage = (event) => {
-                console.log(event.data);
-            };
+        // const setupDataChannel = (channel) => {
+        //     channel.onopen = (event) => {
+        //         console.log('Channel opened!');
+        //         channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+        //         listening(channel);
+        //     };
+        //     channel.onmessage = (event) => {
+        //         console.log(event.data);
+        //     };
 
-            $btn.addEventListener("click", () => handleClick(channel))
-
-        }
+        //     $btn.addEventListener("click", () => handleClick(channel))
+        // }
 
         const handleClick = (channel) => {
             channel.send(JSON.stringify({ type: 'shot', data: 'something' }));
@@ -150,15 +182,18 @@
 
                 switch (labels[index]) {
                     case 'Two':
-                        channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                        // channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                        peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
                         break;
 
                     case 'Three':
-                        channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                        // channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                        peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
                         break;
 
                     default:
-                        channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
+                        // channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
+                        peer.send(JSON.stringify({ type: 'shot', data: 'background' }));
                 }
 
 
