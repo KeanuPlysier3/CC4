@@ -1,6 +1,6 @@
 *.crt
 node_modules/
-key.pem
+*.key
 cert.pem
 .lastIP
 .env
