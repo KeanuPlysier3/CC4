@@ -69,14 +69,15 @@ const initSocket = () => {
     socket.on('connect', () => {
         console.log(`Connected: ${socket.id}`);
         const url = `${new URL(`/sender.html?id=${socket.id}`, window.location)}`;
-
+        document.querySelector('.link').innerHTML = url;
+        document.querySelector('.link').setAttribute('href', url);
 
         const typeNumber = 4;
         const errorCorrectionLevel = 'L';
         const qr = qrcode(typeNumber, errorCorrectionLevel);
         qr.addData(url);
         qr.make();
-        document.getElementById('qr').innerHTML = qr.createImgTag(4);
+        document.querySelector('.qr').innerHTML = qr.createImgTag(4);
     });
 
     socket.on('signal', (myID, signal, peerId) => {

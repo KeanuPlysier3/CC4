@@ -5,12 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body>
+<body class="sender__body">
     <h1>Sender</h1>
-    <button class="two">2PTS</button>
-    <button class="three">3PTS</button>
+    <p>say "two" or "three"!</p>
+    <p>OR</p>
+    <p>Use the buttons.</p>
+    <div class="sender__buttons">
+        <button class="sender__btn two">2PTS</button>
+        <button class="sender__btn three">3PTS</button>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -23,8 +32,10 @@
         let targetSocketID;
         let peerConnection;
         let peer
-        const $two = document.querySelector('.two');
-    const $two = document.querySelector('.two');
+        const $two = document.querySelector(".two");
+        const $three = document.querySelector(".three");
+
+        const buttons = [$two, $three];
 
         const servers = {
             iceServers: [{
@@ -99,13 +110,14 @@
                 console.log('Peer connection established!');
                 peer.send(JSON.stringify({ type: 'hello', data: 'hello' }));
                 listening(peer);
+                buttons.forEach(button => button.addEventListener("click", (e) => handleClick(event, peer)));
             });
 
             peer.on('data', data => {
                 console.log('Received:', data.toString());
             });
 
-            $btn.addEventListener("click", () => handleClick(peer));
+
         };
 
 
@@ -125,8 +137,12 @@
         //     $btn.addEventListener("click", () => handleClick(channel))
         // }
 
-        const handleClick = (channel) => {
-            channel.send(JSON.stringify({ type: 'shot', data: 'something' }));
+        const handleClick = (event, peer) => {
+            if (event.currentTarget.classList.contains("two")) {
+                peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
+            } else if (event.currentTarget.classList.contains("three")) {
+                peer.send(JSON.stringify({ type: 'shot', data: 'three' }));
+            }
         }
 
 

@@ -423,3 +423,56 @@ canvas {
     background-color: var(--color-black);
 
 }
+
+.link {
+    font-family: helvetica-bold;
+    font-size: var(--fontsize-s);
+    padding: var(--whitespace-xs) var(--whitespace-s);
+    color: var(--color-white);
+    background-color: transparent;
+    border-color: transparent;
+    text-transform: uppercase;
+}
+
+.sender__btn {
+    font-family: helvetica-bold;
+    font-size: var(--fontsize-m);
+    padding: var(--whitespace-s) var(--whitespace-xl);
+    color: var(--color-black);
+    background-color: var(--color-white);
+    background-position: center;
+    border-color: transparent;
+    text-transform: uppercase;
+    border-radius: 15px;
+}
+
+.sender__body {
+    font-family: helvetica-bold;
+    height: 100vh;
+    background: rgba(15, 15, 15, 0.849);
+    background-image: url(../ASSETS/Images/background.svg);
+    background-repeat: repeat-y;
+    background-size: contain;
+    background-blend-mode: darken;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.sender__body p {
+    font-family: helvetica-regular;
+    color: var(--color-white);
+    font-size: var(--fontsize-m);
+    text-transform: uppercase;
+    margin-top: 5rem;
+}
+
+.sender__buttons {
+    display: flex;
+    gap: var(--whitespace-l);
+    justify-content: center;
+    align-items: center;
+    margin-top: 5rem;
+}
