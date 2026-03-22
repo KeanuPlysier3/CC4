@@ -59,7 +59,7 @@ server.listen(port, () => {
 
 That way I also realised that I have to change the port number from 443 to 80 for http, but this might cause some problems in the future, as I vaguely remember that webRTC can only use https.
 
-![alt text](image.png) 
+![alt text](images/image.png) 
 
 <br><br>
 
@@ -68,7 +68,7 @@ That way I also realised that I have to change the port number from 443 to 80 fo
 <br><br>
 
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 As for now, the server works and directs us to the index.html(receiver).
 
@@ -240,7 +240,7 @@ One problem that is occuring at the moment is that my the dataChannel messages a
 
 <br><br>
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 <br><br>
 
@@ -630,6 +630,7 @@ In this file I simply changed the message receiver and included a new type.
 
 ```
 <br><br>
+
 #### Training new model
 
 Now that I know that my code works I took some time to train a new model that understands the difference between the words "two", "three", and background noise. 
@@ -744,7 +745,7 @@ Next up :
 
 I simply followed the guide we were given on simple peer via github. I also asked a few questions on how it worked. 
 
-![alt text](image-3.png) ![alt text](image-4.png)
+![alt text](images/image-3.png) ![alt text](images/image-4.png)
 
 I had to rewrite my data transfer logic, because the way of sending data had changed.
 
@@ -757,3 +758,15 @@ I simply added some css that fits the receiver's look. On chrome ios it looks di
 ## chrome IOS
 
 Chrome on ios simply does not want to work. I tried a bunch of stuff. I optimised the code request mic permission on user interaction, but it does not do anything. When loading the page immediately denies the microphone acces without even being asked for permission yet.
+
+![alt text](images/image-5.png)
+
+<br><br> 
+
+To fix being able to use the application on chrome, I simply added buttons that can be used instead of voice commands.
+
+Right before the last consult a class mate asked if my chrome settings allowed microphone. Turned out it didn't and that was the reason it immediately denied all access to microphone. Turning it on made everything work.
+
+
+
+

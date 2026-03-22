@@ -36,6 +36,7 @@
         let peer
         let recognizer;
         let listening = false;
+        let permit = false;
         const $two = document.querySelector(".two");
         const $three = document.querySelector(".three");
         const $mic = document.querySelector(".sender__mic");
@@ -49,12 +50,12 @@
             }]
         };
 
-        const init = async () => {
+        const init = async () => { //initializes socket and attempts to call peer if id querystring is present
             initSocket();
             attemptPeerCall();
         };
 
-        const initSocket = () => {
+        const initSocket = () => { //initializes socket and sets up signal listener
             socket = io.connect('/');
             socket.on('connect', () => {
                 console.log(socket.id);
@@ -67,20 +68,10 @@
                 peer.signal(signal);
             });
 
-            // socket.on('peerAnswer', async (myId, answer, peerId) => {
-            //     console.log(`Received peerAnswer from ${peerId}`);
-            //     console.log(answer);
-            //     await handlePeerAnswer(myId, answer, peerId);
-            // });
 
-            // socket.on('peerIce', async (myId, candidate, peerId) => {
-            //     console.log(`Received peerIce from ${peerId}`, candidate);
-            //     await handlePeerIce(myId, candidate, peerId);
-            // });
         };
 
-
-        const attemptPeerCall = () => {
+        const attemptPeerCall = () => {//checks url for id querystring and calls peer if found
             targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
             console.log(`target: ${targetSocketID}`);
 
@@ -89,22 +80,7 @@
             }
         }
 
-        // const callPeer = async (peerId) => {
-        //     peerConnection = new RTCPeerConnection(servers);
-        //     
-        //     const dataChannel = peerConnection.createDataChannel('shot');
-        //     setupDataChannel(dataChannel);
-
-        //     peerConnection.onicecandidate = (e) => {
-        //         console.log('ice candidate', e.candidate);
-        //         socket.emit('peerIce', peerId, e.candidate);
-        //     };
-        //     const offer = await peerConnection.createOffer();
-        //     await peerConnection.setLocalDescription(offer);
-        //     socket.emit('peerOffer', peerId, offer);
-        // };
-
-        const callPeer = (peerId) => {
+        const callPeer = (peerId) => { //creates a new peer connection and emits signal data to target peer through socket
             peer = new SimplePeer({ initiator: true, trickle: false });
 
             peer.on('signal', data => {
@@ -115,7 +91,7 @@
             peer.on('connect', () => {
                 console.log('Peer connection established!');
                 peer.send(JSON.stringify({ type: 'hello', data: 'hello' }));
-                // requestMicPermission();
+
                 setupRecognizer(peer);
                 buttons.forEach(button => button.addEventListener("click", (e) => handleClick(event, peer)));
             });
@@ -127,24 +103,25 @@
 
         };
 
+        const handlePeerAnswer = async (myId, answer, peerId) => { //handles answer signal from peer and sets remote description
+            await peerConnection.setRemoteDescription(answer);
+        };
 
+        const handlePeerIce = async (myId, candidate, peerId) => { //handles ice candidates from peer and adds them to the connection
+            if (!candidate) {
+                return;
+            }
+            await peerConnection.addIceCandidate(candidate);
+        };
 
+        const getUrlParameter = name => { //helper function to grab querystring parameters by name
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        };
 
-
-        // const setupDataChannel = (channel) => {
-        //     channel.onopen = (event) => {
-        //         console.log('Channel opened!');
-        //         channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
-        //         listening(channel);
-        //     };
-        //     channel.onmessage = (event) => {
-        //         console.log(event.data);
-        //     };
-
-        //     $btn.addEventListener("click", () => handleClick(channel))
-        // }
-
-        const handleClick = (event, peer) => {
+        const handleClick = (event, peer) => { //handles button clicks and sends appropriate shot type to peer
             if (event.currentTarget.classList.contains("two")) {
                 peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
             } else if (event.currentTarget.classList.contains("three")) {
@@ -152,33 +129,7 @@
             }
         }
 
-
-
-        const handlePeerAnswer = async (myId, answer, peerId) => {
-            await peerConnection.setRemoteDescription(answer);
-        };
-
-
-
-
-
-        const handlePeerIce = async (myId, candidate, peerId) => {
-            if (!candidate) {
-                return;
-            }
-            await peerConnection.addIceCandidate(candidate);
-        };
-
-
-
-        const getUrlParameter = name => {
-            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-            const results = regex.exec(location.search);
-            return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
-        };
-
-        const setupRecognizer = async (channel) => {//sets up the speech command model and listening function
+        const setupRecognizer = async (channel) => { //sets up the speech command model and listening function
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
             const modelPath = baseURL + "model/shot/";
 
@@ -192,11 +143,26 @@
             await recognizer.ensureModelLoaded();
 
             console.log("Model ready! Listening..."); //everything loaded in
-            let permission = requestMicPermission();
-            permission ? $mic.addEventListener('click', listen) : console.error('Microphone permission is required to use the recognizer.');
+
+            $mic.addEventListener('click', listen);
         }
 
-        const listen = () => {
+        const listen = () => { //handles mic button clicks, requests permission if not already granted, and starts/stops listening
+            if (!permit) {
+                requestMicPermission().then(granted => {
+                    if (granted) {
+                        permit = true;
+                        startListening();
+                    } else {
+                        alert('Microphone permission is required to use voice commands.');
+                        return;
+                    }
+                });
+            }
+            startListening();
+        };
+
+        const startListening = () => { //starts and stops the recognizer listening function and handles results
             if (!listening) {
                 if (!recognizer) return;
                 listening = true;
@@ -233,13 +199,9 @@
                     console.log("Stopped listening.");
                 }
             }
-        };
+        }
 
-
-
-
-
-        const requestMicPermission = async () => {
+        const requestMicPermission = async () => { //requests microphone permission from the user
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 console.log('Microphone permission granted');
@@ -250,8 +212,8 @@
                 return false;
             }
         };
-        init();
 
+        init();
     </script>
 </body>
 

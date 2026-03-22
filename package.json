@@ -1,7 +1,9 @@
 {
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node index.js",
+    "development": "node index.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

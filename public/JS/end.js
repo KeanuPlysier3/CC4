@@ -8,7 +8,6 @@ const height = 600;
 
 const init = () => {
     setupCanvas();
-
     img = new Image();
     img.src = "ASSETS/Images/trophee.png";
     img.width = "150%";
