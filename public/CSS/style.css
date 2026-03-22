@@ -13,6 +13,20 @@
     src: url(../ASSETS/fonts/Helvetica.ttf);
 }
 
+@keyframes pulse-opacity {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
 
 
 
@@ -49,8 +63,7 @@
     /* 80px - top and bottom at sections */
 }
 
-body,
-html {
+body {
     overflow-x: hidden;
     overflow-y: hidden;
 }
@@ -422,4 +435,74 @@ canvas {
     color: var(--color-white);
     background-color: var(--color-black);
 
+}
+
+.link {
+    font-family: helvetica-bold;
+    font-size: var(--fontsize-s);
+    padding: var(--whitespace-xs) var(--whitespace-s);
+    color: var(--color-white);
+    background-color: transparent;
+    border-color: transparent;
+    text-transform: uppercase;
+}
+
+.sender__btn {
+    font-family: helvetica-bold;
+    font-size: var(--fontsize-m);
+    padding: var(--whitespace-s) var(--whitespace-xl);
+    color: var(--color-black);
+    background-color: var(--color-white);
+    background-position: center;
+    border-color: transparent;
+    text-transform: uppercase;
+    border-radius: 15px;
+}
+
+.sender__body {
+    overflow-y: visible !important;
+    font-family: helvetica-bold;
+    height: 100vh;
+    background: rgba(15, 15, 15, 0.849);
+    background-image: url(../ASSETS/Images/background.svg);
+    background-repeat: repeat-y;
+    background-size: contain;
+    background-blend-mode: darken;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.sender__body p {
+    font-family: helvetica-regular;
+    color: var(--color-white);
+    font-size: var(--fontsize-m);
+    text-transform: uppercase;
+    margin-top: 3rem;
+}
+
+.sender__buttons {
+    display: flex;
+    gap: var(--whitespace-l);
+    justify-content: center;
+    align-items: center;
+    margin-top: 5rem;
+}
+
+.sender__mic {
+    margin-top: var(--whitespace-s);
+    max-width: 50%;
+}
+
+.sender__feedback {
+    font-family: helvetica-bold;
+    color: var(--color-red) !important;
+    font-size: var(--fontsize-xs) !important;
+
+}
+
+.pulse {
+    animation: pulse-opacity 1s infinite;
 }

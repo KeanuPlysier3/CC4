@@ -32,7 +32,10 @@ let clock = 24;
 
 let wins = 0;//total amount of wins tht updates progress image
 
+let socket; // will be assigned a value later
+let peerConnection;
 
+let peer;
 
 
 const init = () => {
@@ -41,7 +44,6 @@ const init = () => {
     setInterval(shotClock, "1000");
 }
 
-//setup functions 
 const setup = () => { //executes all setup functions
     setupElements();
     setupEvents();
@@ -54,38 +56,68 @@ const setup = () => { //executes all setup functions
     setupTarget();
 }
 
-let socket; // will be assigned a value later
-let peerConnection;
 
+//connection establishment
 const servers = {
     iceServers: [{
         urls: `stun:stun.l.google.com:19302`
     }]
 };
 
-
 const initSocket = () => {
     socket = io.connect('/');
     socket.on('connect', () => {
         console.log(`Connected: ${socket.id}`);
         const url = `${new URL(`/sender.html?id=${socket.id}`, window.location)}`;
-
+        document.querySelector('.link').innerHTML = url;
+        document.querySelector('.link').setAttribute('href', url);
 
         const typeNumber = 4;
         const errorCorrectionLevel = 'L';
         const qr = qrcode(typeNumber, errorCorrectionLevel);
         qr.addData(url);
         qr.make();
-        document.getElementById('qr').innerHTML = qr.createImgTag(4);
+        document.querySelector('.qr').innerHTML = qr.createImgTag(4);
     });
 
-    socket.on('peerOffer', (myId, offer, peerId) => {
-        console.log(`Received peerOffer from ${peerId}`);
-        answerPeerOffer(myId, offer, peerId);
-    });
-    socket.on('peerIce', (myId, candidate, peerId) => {
-        console.log(`Received peerIce from ${peerId}`, candidate);
-        handlePeerIce(myId, candidate, peerId);
+    socket.on('signal', (myID, signal, peerId) => {
+        if (!peer) {
+            // If this is the first signal, it's an offer: create peer as receiver
+            peer = new SimplePeer({ initiator: false, trickle: false });
+
+            peer.on('signal', data => {
+                // Send answer back to initiator
+                socket.emit('signal', peerId, data);
+            });
+
+            peer.on('connect', () => {
+                console.log('Peer connection established!');
+                // You can send a hello or other data if you want
+                peer.send(JSON.stringify({ type: 'hello', data: 'hello from receiver' }));
+            });
+
+            peer.on('data', data => {
+                // Handle incoming data
+                // const message = JSON.parse(data.toString());
+                // ...handle message...
+                const message = JSON.parse(data);
+
+                switch (message.type) {
+                    case 'shot':
+                        handleShot(message.data);
+                        console.log(`shot: ${message.data}`)
+                        break;
+                    case 'hello':
+                        setupDialog()
+                        console.log(`hello: ${message.data}`)
+                        break;
+                    default:
+                        console.log('Unknown event:', message.type);
+                }
+            });
+        }
+        // Pass any signal (offer, answer, ICE) to SimplePeer
+        peer.signal(signal);
     });
 };
 
@@ -96,11 +128,6 @@ const answerPeerOffer = async (myId, offer, peerId) => {
     peerConnection.ondatachannel = (e) => {
         const dataChannel = e.channel;
         console.log('Data channel received:', dataChannel.label);
-
-        // dataChannel.onopen = (e) => {
-        //     console.log('Receiver channel OPENED!');
-        //     dataChannel.send('hello back');
-        // }
 
         dataChannel.onmessage = (event) => {
             const message = JSON.parse(event.data);
@@ -144,6 +171,7 @@ const handlePeerIce = async (myId, candidate, peerId) => {
 };
 
 
+//setup functions
 const setupElements = () => { //group of all static querySelectors
 
     $dialog = document.querySelector(".start");
@@ -232,9 +260,6 @@ const setupTarget = () => { //sets progress and targetscore after refresh
 }
 
 const setupShooting = () => { //sets stats in the navbar after refresh
-
-
-
     if (!localStorage.getItem("two")) {
         localStorage.setItem("two", "rookie");
         two = localStorage.getItem("two");
@@ -298,9 +323,6 @@ const setupBoards = () => { //sets up all the boards
 }
 
 const setupUpgrades = () => { //sets up the possible upgrades on refresh
-
-
-
     if (localStorage.getItem("three") == "pro") {
         const $price = document.querySelector("#price1");
         $price.textContent = "50pts";
@@ -387,7 +409,7 @@ const shotClock = () => { //resets the shotclock and user's score after 24
 };
 
 
-//eventListener functions
+//eventListeners
 const handleSubmit = (event) => { //saves username in localStorage after the user submits a name.
     event.preventDefault();
     let username = document.querySelector("#username").value;
@@ -397,8 +419,7 @@ const handleSubmit = (event) => { //saves username in localStorage after the use
 
 }
 
-const handleShot = (shot) => { //handles shooting after pressing the 2pt btn
-
+const handleShot = (shot) => { //handles shooting after pressing a btn
     $previousBall = document.querySelector(".ball");
     if ($previousBall) {
         $previousBall.remove();
@@ -586,180 +607,6 @@ const handleShot = (shot) => { //handles shooting after pressing the 2pt btn
     $btn2.disabled = false;
 
 }
-
-// const handleThree = () => {//handles shooting after pressing the 3pt btn
-//     $previousBall = document.querySelector(".ball");
-//     if ($previousBall) {
-//         $previousBall.remove();
-//     }
-
-//     $ball = document.createElement("div");
-//     $ball.classList.add("ball");
-//     document.querySelector(".grid").appendChild($ball);
-//     //console.log("hy");
-//     let three = localStorage.getItem("three");
-//     //console.log(two);
-//     let percentage = Math.random() * 100;
-//     console.log(percentage);
-
-//     switch (three) {
-//         case "rookie":
-//             if (percentage <= 10) {
-//                 console.log("3 made");
-//                 score = score + 3;
-//                 xp = xp + 3;
-//                 setTimeout(() => {
-
-//                     $ball.style.transform = 'translateY(500%)'//move the ball do
-//                 }, 500);
-
-//             }
-//             else {
-//                 setTimeout(() => {
-
-//                     dice = Math.floor(Math.random() * 3);
-
-//                     switch (dice) {
-
-//                         case 0:
-//                             $ball.style.transform = 'translate(100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-
-//                         case 1:
-//                             $ball.style.transform = 'translate(-100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(-200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-//                         case 2:
-//                             $ball.style.transform = 'translateY(300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translateY(100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-//                     }
-
-//                 }, 1);
-//             }
-//             break;
-
-//         case "pro":
-//             if (percentage <= 40) {
-//                 console.log("3 made");
-//                 score = score + 3;
-//                 xp = xp + 3;
-//                 setTimeout(() => {
-
-//                     $ball.style.transform = 'translateY(500%)'; // move down by 100px
-//                 }, 500);
-
-//             }
-//             else {
-//                 setTimeout(() => {
-
-//                     dice = Math.floor(Math.random() * 3);
-
-//                     switch (dice) {
-
-//                         case 0:
-//                             $ball.style.transform = 'translate(100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-
-//                         case 1:
-//                             $ball.style.transform = 'translate(-100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(-200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-//                         case 2:
-//                             $ball.style.transform = 'translateY(300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translateY(100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-//                     }
-
-//                 }, 1);
-//             }
-//             break;
-
-//         case "elite":
-//             if (percentage <= 60) {
-//                 console.log("3 made");
-//                 score = score + 3;
-//                 xp = xp + 3;
-//                 setTimeout(() => {
-
-//                     $ball.style.transform = 'translateY(500%)'; // move down by 100px
-//                 }, 500);
-
-//             }
-//             else {
-//                 setTimeout(() => {
-
-//                     dice = Math.floor(Math.random() * 3);
-
-//                     switch (dice) {
-
-//                         case 0:
-//                             $ball.style.transform = 'translate(100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-
-//                         case 1:
-//                             $ball.style.transform = 'translate(-100%,300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translate(-200%,100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-
-
-//                         case 2:
-//                             $ball.style.transform = 'translateY(300%)';
-//                             setTimeout(() => {
-//                                 $ball.style.transform = 'translateY(100%)';
-//                                 $ball.style.opacity = '0.5';
-//                             }, 500)
-//                             break;
-//                     }
-
-//                 }, 1);
-//             }
-//             break;
-//     }
-
-//     $scoreboard.textContent = score;
-//     $xp.innerHTML = "<span class='bold'> points: </span > " + xp;
-//     localStorage.setItem("xp", xp);
-//     $btn1.disabled = false;
-//     $btn2.disabled = false;
-// }
 
 const handleUpgradeThree = () => {//upgrades 3point stat
     three = localStorage.getItem("three");

@@ -5,20 +5,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRTC</title>
+    <link rel="stylesheet" href="/css/reset.css">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 
-<body>
+<body class="sender__body">
     <h1>Sender</h1>
-    <button class="btn">say something</button>
+    <p>say "two" or "three"!</p>
+    <img src="assets/Images/mic.png" alt="mic" class="sender__mic">
+    <p class="sender__feedback">tap mic to start listening!</p>
+    <p>OR</p>
+    <p>Use the buttons.</p>
+    <div class="sender__buttons">
+        <button class="sender__btn two">2PTS</button>
+        <button class="sender__btn three">3PTS</button>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"
+        integrity="sha512-0f7Ahsuvr+/P2btTY4mZIw9Vl23lS6LY/Y7amdkmUg2dqsUF+cTe4QjWvj/NIBHJoGksOiqndKQuI9yzn2hB0g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script type="module">
 
         let socket;
         let targetSocketID;
         let peerConnection;
-        const $btn = document.querySelector('.btn');
+        let peer
+        let recognizer;
+        let listening = false;
+        let permit = false;
+        const $two = document.querySelector(".two");
+        const $three = document.querySelector(".three");
+        const $mic = document.querySelector(".sender__mic");
+        const $feedback = document.querySelector(".sender__feedback");
+
+        const buttons = [$two, $three];
 
         const servers = {
             iceServers: [{
@@ -26,32 +50,28 @@
             }]
         };
 
-        const init = async () => {
+        const init = async () => { //initializes socket and attempts to call peer if id querystring is present
             initSocket();
             attemptPeerCall();
         };
 
-        const initSocket = () => {
+        const initSocket = () => { //initializes socket and sets up signal listener
             socket = io.connect('/');
             socket.on('connect', () => {
                 console.log(socket.id);
             });
 
 
-            socket.on('peerAnswer', async (myId, answer, peerId) => {
-                console.log(`Received peerAnswer from ${peerId}`);
-                console.log(answer);
-                await handlePeerAnswer(myId, answer, peerId);
+            socket.on('signal', async (myId, signal, peerId) => {
+                console.log(`Received signal from ${peerId}`);
+                console.log(signal);
+                peer.signal(signal);
             });
 
-            socket.on('peerIce', async (myId, candidate, peerId) => {
-                console.log(`Received peerIce from ${peerId}`, candidate);
-                await handlePeerIce(myId, candidate, peerId);
-            });
+
         };
 
-
-        const attemptPeerCall = () => {
+        const attemptPeerCall = () => {//checks url for id querystring and calls peer if found
             targetSocketID = getUrlParameter('id');//grab the socketID from url id querystring.
             console.log(`target: ${targetSocketID}`);
 
@@ -60,74 +80,60 @@
             }
         }
 
-        const callPeer = async (peerId) => {
-            peerConnection = new RTCPeerConnection(servers);
-            // add the video stream
-            const dataChannel = peerConnection.createDataChannel('shot');
-            setupDataChannel(dataChannel);
+        const callPeer = (peerId) => { //creates a new peer connection and emits signal data to target peer through socket
+            peer = new SimplePeer({ initiator: true, trickle: false });
 
-            peerConnection.onicecandidate = (e) => {
-                console.log('ice candidate', e.candidate);
-                socket.emit('peerIce', peerId, e.candidate);
-            };
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit('peerOffer', peerId, offer);
+            peer.on('signal', data => {
+                socket.emit('signal', peerId, data);
+                console.log('Signal data emitted:', data);
+            });
+
+            peer.on('connect', () => {
+                console.log('Peer connection established!');
+                peer.send(JSON.stringify({ type: 'hello', data: 'hello' }));
+
+                setupRecognizer(peer);
+                buttons.forEach(button => button.addEventListener("click", (e) => handleClick(event, peer)));
+            });
+
+            peer.on('data', data => {
+                console.log('Received:', data.toString());
+            });
+
+
         };
 
-
-
-
-
-        const setupDataChannel = (channel) => {
-            channel.onopen = (event) => {
-                console.log('Channel opened!');
-                channel.send(JSON.stringify({ type: 'hello', data: 'hello' }));
-                listening(channel);
-            };
-            channel.onmessage = (event) => {
-                console.log(event.data);
-            };
-
-            $btn.addEventListener("click", () => handleClick(channel))
-
-        }
-
-        const handleClick = (channel) => {
-            channel.send(JSON.stringify({ type: 'shot', data: 'something' }));
-        }
-
-
-
-        const handlePeerAnswer = async (myId, answer, peerId) => {
+        const handlePeerAnswer = async (myId, answer, peerId) => { //handles answer signal from peer and sets remote description
             await peerConnection.setRemoteDescription(answer);
         };
 
-
-
-
-
-        const handlePeerIce = async (myId, candidate, peerId) => {
+        const handlePeerIce = async (myId, candidate, peerId) => { //handles ice candidates from peer and adds them to the connection
             if (!candidate) {
                 return;
             }
             await peerConnection.addIceCandidate(candidate);
         };
 
-
-
-        const getUrlParameter = name => {
+        const getUrlParameter = name => { //helper function to grab querystring parameters by name
             name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
             const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
             const results = regex.exec(location.search);
             return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
         };
 
-        const listening = async (channel) => {//sets up the speech command model and listening function
+        const handleClick = (event, peer) => { //handles button clicks and sends appropriate shot type to peer
+            if (event.currentTarget.classList.contains("two")) {
+                peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
+            } else if (event.currentTarget.classList.contains("three")) {
+                peer.send(JSON.stringify({ type: 'shot', data: 'three' }));
+            }
+        }
+
+        const setupRecognizer = async (channel) => { //sets up the speech command model and listening function
             const baseURL = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
             const modelPath = baseURL + "model/shot/";
 
-            const recognizer = speechCommands.create(
+            recognizer = speechCommands.create(
                 "BROWSER_FFT",
                 undefined,
                 modelPath + "model.json", //use following model
@@ -138,49 +144,64 @@
 
             console.log("Model ready! Listening..."); //everything loaded in
 
-            recognizer.listen(async result => {
-
-                // result.scores = prediction probabilities for each class
-                const scores = result.scores; // array with two probabilitie scores ex:[0.92,08]
-                const labels = recognizer.wordLabels(); //grabs the labels [blocked,background-noise]
-                const index = scores.indexOf(Math.max(...scores)); //which one has the heightes probability score -> takes position of that value over the spread out array
-
-                // Display which word was detected
-                console.log("Detected:", labels[index]);
-
-                switch (labels[index]) {
-                    case 'Two':
-                        channel.send(JSON.stringify({ type: 'shot', data: 'two' }));
-                        break;
-
-                    case 'Three':
-                        channel.send(JSON.stringify({ type: 'shot', data: 'three' }));
-                        break;
-
-                    default:
-                        channel.send(JSON.stringify({ type: 'shot', data: 'background' }));
-                }
-
-
-                // if (labels[index] === "Blocked") {
-
-                //     console.log("Blocked by JAMES send");
-                //     channel.send(JSON.stringify({ type: 'blocked', data: 'by james' }));
-                // }
-
-
-            }, {
-                // How much audio overlaps between predictions (0.1–0.9)
-                overlapFactor: 0.45,
-
-                // Minimum confidence required to report a word
-                probabilityThreshold: 0.8,
-
-                includeSpectrogram: false
-            });
+            $mic.addEventListener('click', listen);
         }
 
-        const requestMicPermission = async () => {
+        const listen = () => { //handles mic button clicks, requests permission if not already granted, and starts/stops listening
+            if (!permit) {
+                requestMicPermission().then(granted => {
+                    if (granted) {
+                        permit = true;
+                        startListening();
+                    } else {
+                        alert('Microphone permission is required to use voice commands.');
+                        return;
+                    }
+                });
+            }
+            startListening();
+        };
+
+        const startListening = () => { //starts and stops the recognizer listening function and handles results
+            if (!listening) {
+                if (!recognizer) return;
+                listening = true;
+                $mic.classList.toggle("pulse");
+                $feedback.textContent = "Tap mic to stop listening.";
+                recognizer.listen(result => {
+                    const scores = result.scores;
+                    const labels = recognizer.wordLabels();
+                    const index = scores.indexOf(Math.max(...scores));
+                    console.log("Detected:", labels[index]);
+
+                    switch (labels[index]) {
+                        case 'Two':
+                            peer.send(JSON.stringify({ type: 'shot', data: 'two' }));
+                            break;
+                        case 'Three':
+                            peer.send(JSON.stringify({ type: 'shot', data: 'three' }));
+                            break;
+                        default:
+                            peer.send(JSON.stringify({ type: 'shot', data: 'background' }));
+                    }
+                }, {
+                    overlapFactor: 0.45,
+                    probabilityThreshold: 0.8,
+                    includeSpectrogram: false
+                });
+                console.log("Listening...");
+            } else {
+                if (recognizer && recognizer.isListening()) {
+                    $mic.classList.toggle("pulse");
+                    $feedback.textContent = "Tap mic to start listening.";
+                    listening = false;
+                    recognizer.stopListening();
+                    console.log("Stopped listening.");
+                }
+            }
+        }
+
+        const requestMicPermission = async () => { //requests microphone permission from the user
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 console.log('Microphone permission granted');
@@ -191,8 +212,8 @@
                 return false;
             }
         };
-        init();
 
+        init();
     </script>
 </body>
 
