@@ -7,10 +7,13 @@ This file helps you setup the experience.
 
 ### steps:
 - run npm i inside the project folder's terminal.
-- run in terminals of project's folder to generate certifacates (needed to use https) ```openssl req -x509 -out localhost.crt -keyout localhost.key \
+- run in terminals of project's folder to generate certifacates (needed to use https)
+ ```
+  openssl req -x509 -out localhost.crt -keyout localhost.key \
   -newkey rsa:2048 -nodes -sha256 \
   -subj '/CN=localhost' -extensions EXT -config <( \
-   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")```
+   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth")
+  ```
 - Make sure that you have you local.crt and local.key.
 - If you want to use your microphone, make sure you allow your browser to use it in your browser's app settings.
 - If you want to quickly win, you can set all things in your localstorage from "rookie" to "elite".
